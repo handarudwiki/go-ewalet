@@ -4,6 +4,7 @@ type Config struct {
 	Server   Server
 	Database Database
 	Email    Email
+	Redis    Redis
 }
 
 type Server struct {
@@ -22,5 +23,10 @@ type Email struct {
 	Host     string
 	Port     string
 	Email    string
+	Password string
+}
+
+type Redis struct {
+	Addres   string
 	Password string
 }
