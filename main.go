@@ -18,15 +18,18 @@ func main() {
 	userRepository := repository.NewUser(db)
 	transactionRepository := repository.NewTransaction(db)
 	accountRepository := repository.NewAccount(db)
+	notificationRepository := repository.NewNotification(db)
 
 	emailSercice := service.NewEmail(cnf)
 	userService := service.NewUser(userRepository, cacheConnection, emailSercice)
-	transactionService := service.NewTransaction(accountRepository, cacheConnection, transactionRepository)
+	notificationService := service.NewNotification(notificationRepository)
+	transactionService := service.NewTransaction(accountRepository, cacheConnection, transactionRepository, notificationRepository)
 
 	authMid := middleware.Authenticate(userService)
 
 	app := fiber.New()
 	api.NewAuth(app, authMid, userService)
 	api.NewTransfer(app, authMid, transactionService)
+	api.NewNotification(app, authMid, notificationService)
 	_ = app.Listen(cnf.Server.Host + ":" + cnf.Server.Port)
 }

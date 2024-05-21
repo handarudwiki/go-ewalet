@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/handarudwiki/golang-ewalet/domain"
@@ -11,21 +12,24 @@ import (
 )
 
 type transactionService struct {
-	accountRepository     domain.AccountRepository
-	cacheRepository       domain.CacheRepository
-	transactionRepository domain.TransactionRepository
+	accountRepository      domain.AccountRepository
+	cacheRepository        domain.CacheRepository
+	transactionRepository  domain.TransactionRepository
+	notificationRepository domain.NotificationRepository
 }
 
 func NewTransaction(
 	accountRepository domain.AccountRepository,
 	cacheRepository domain.CacheRepository,
 	transactionRepository domain.TransactionRepository,
+	notificationRepository domain.NotificationRepository,
 ) domain.TransactionService {
 
 	return &transactionService{
-		accountRepository:     accountRepository,
-		cacheRepository:       cacheRepository,
-		transactionRepository: transactionRepository,
+		accountRepository:      accountRepository,
+		cacheRepository:        cacheRepository,
+		transactionRepository:  transactionRepository,
+		notificationRepository: notificationRepository,
 	}
 }
 
@@ -138,5 +142,32 @@ func (t transactionService) TransferExecute(ctx context.Context, req dto.Transfe
 		return err
 	}
 
+	go t.notificationAfterTransfer(myAccount, dofAccount, reqInq.Amount)
+
 	return nil
+}
+
+func (t transactionService) notificationAfterTransfer(sofAccount domain.Account, dofAccount domain.Account, amount float64) {
+	notificationSeder := domain.Notification{
+		UserID:    sofAccount.UserID,
+		Title:     "Transfer Berhasil",
+		Body:      fmt.Sprintf("Transfer senilai %2.f berhasil", amount),
+		Status:    1,
+		IsRead:    0,
+		CreatedAt: time.Now(),
+	}
+
+	notificationReceiver := domain.Notification{
+		UserID:    dofAccount.UserID,
+		Title:     "Berhasil menerima Dana",
+		Body:      fmt.Sprintf("Dana Diterima senilai %2.f ", amount),
+		Status:    1,
+		IsRead:    0,
+		CreatedAt: time.Now(),
+	}
+
+	t.notificationRepository.Insert(context.Background(), &notificationSeder)
+
+	t.notificationRepository.Insert(context.Background(), &notificationReceiver)
+
 }
