@@ -90,6 +90,10 @@ func (t transactionService) TransferExecute(ctx context.Context, req dto.Transfe
 
 	user := ctx.Value("x-user").(dto.UserData)
 
+	if err != nil {
+		return err
+	}
+
 	myAccount, err := t.accountRepository.FindByUserID(ctx, user.ID)
 	if err != nil {
 		return err
